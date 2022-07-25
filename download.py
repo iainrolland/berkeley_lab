@@ -8,6 +8,7 @@ from getpass import getpass
 import ssl
 import base64
 import math
+from tqdm import tqdm
 import h5py
 from h5py._hl.group import Group
 from h5py._hl.dataset import Dataset
@@ -199,7 +200,7 @@ def cmr_download(urls, force=False, quiet=False):
     credentials = None
     token = None
 
-    for index, url in enumerate(urls, start=1):
+    for index, url in tqdm(enumerate(urls, start=1)):
         if not credentials and not token:
             p = urlparse(url)
             if p.scheme == 'https':
@@ -234,7 +235,10 @@ def cmr_download(urls, force=False, quiet=False):
                         output_progress(count, max_chunks, status=download_speed)
             if not quiet:
                 print()
-            compress_soil_moisture_file(filename, filename)  # COMPRESS OUR FILE (KEEP SELECTED BANDS ONLY)
+
+            if url.endswith(".h5"): # COMPRESS OUR FILE (KEEP SELECTED BANDS ONLY)
+                compress_soil_moisture_file(filename, filename.replace(".h5", "_small.h5"))
+                os.remove(filename)  # delete the big file (leaving only the small file)
         except HTTPError as e:
             print('HTTP error {0}, {1}'.format(e.code, e.reason))
         except URLError as e:
